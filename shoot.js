@@ -1,7 +1,10 @@
+//canvas setup
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-var imageCollection = document.images;
+
 ctx.imageSmoothingEnabled = false;
+
+
 //input setup
 var keys = {
     space: 0,
@@ -10,6 +13,7 @@ var keys = {
     right: 0,
     down: 0,
 };
+
 document.addEventListener("keydown", function (event) {
     if (event.keyCode == 32) keys.space = 1;
     if (event.keyCode == 37) keys.left = 1;
@@ -24,6 +28,11 @@ document.addEventListener("keyup", function (event) {
     if (event.keyCode == 39) keys.right = 0;
     if (event.keyCode == 40) keys.down = 0;
 });
+
+var compatMode = 0; //compatability mode - disables features that might not work on all devices/browsers.
+var gameStarted = false;
+//images
+var imageCollection = new Array
 
 //game state
 var gameOver = new Boolean;
@@ -49,21 +58,16 @@ var projectiles = new Array;
 //ui
 var gui = new Object;
 
+
 init();
 
 function init() {
-    startMessage = {
-        text: "ASSERT DOMINANCE!",
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        font: "50px Arial",
-        align: "center",
-        baseline: "middle",
-        duration: 100,
+    if (!compatMode) {
+        imageCollection = document.images;
     }
 
     gameOver = false;
-    gameTicks = 0;
+    gameTicks = 100;
     score = {
         total: 0,
         multiplier: 1.00,
@@ -73,32 +77,40 @@ function init() {
     canvas.y = 0;
 
     background1 = {
-        image: imageCollection[1],
-        x: 0,
-        y: 0,
-        width: 1024,
-        height: 350,
-        scale: true,
+        image: {
+            src: imageCollection[1],
+            x: 0,
+            y: 0,
+            width: 1024,
+            height: 350,
+            scale: true,
+        },
     }
     background2 = {
-        image: imageCollection[1],
-        x: 1024,
-        y: 0,
-        width: 1024,
-        height: 350,
-        scale: true,
+        image: {
+            src: imageCollection[1],
+            x: 1024,
+            y: 0,
+            width: 1024,
+            height: 350,
+            scale: true,
+        }
     }
 
     player = {
         name: "player",
         role: "player",
         color: "#0ff",
-        image: imageCollection[0],
+        image: {
+            src: imageCollection[0],
+            x: 50,
+            y: canvas.height / 2,
+            scale: false,
+        },
         x: 50,
         y: canvas.height / 2,
-        width: 32,
-        height: 32,
-        scale: false,
+        width: 16,
+        height: 48,
         firerate: 4,
         speed: 1,
         xSpeed: 0,
@@ -116,29 +128,6 @@ function init() {
 
     };
     damageBuffer = 0;
-    //enemy template
-    /*
-    {
-        name: "string",
-        color: "#f00",
-        width: 32,
-        height: 32,
-        xSpeed: -1,
-        ySpeed: 0,
-        hp: 50,
-        pointsOnKill: 50,
-        firerate: 1,
-        projectile: {
-            color: "#f0f",
-            width: 8,
-            height: 8,
-            damage: 10,
-            xSpeed: -1,
-            ySpeed: 0,
-        },
-        spawnFreq: 50,
-    },
-    */
 
     enemyTypes = [{
         name: "basic",
@@ -169,14 +158,7 @@ function init() {
         hp: 30,
         pointsOnKill: 50,
         firerate: 0,
-        projectile: {
-            color: "#f0f",
-            width: 16,
-            height: 4,
-            damage: 10,
-            xSpeed: -5,
-            ySpeed: 0,
-        },
+        projectile: "none",
         spawnFreq: 35,
     }, {
         name: "tank",
@@ -206,12 +188,30 @@ function init() {
     };
 
     gui = {
+        startMessage: {
+            text: "ASSERT DOMINANCE!",
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            font: "50px Arial",
+            align: "center",
+            baseline: "middle",
+            duration: 100,
+        },
         healthBar: {
+            label: {
+                text: "POWER:",
+                x: 10,
+                y: 10,
+                font: "10px monospace",
+                color: "#fff",
+                align: "left",
+                baseline: "top",
+            },
             background: {
                 color: "#000",
-                x: 42,
+                x: 45,
                 y: 10,
-                width: (player.hp * 2) - 1,
+                width: (player.hp * 2) + 3,
                 height: 10,
             },
             meter: {
@@ -223,13 +223,24 @@ function init() {
             },
         },
         scoreCounter: {
-            font: "10px monospace",
-            color: "#fff",
-            align: "left",
-            baseline: "top",
-            text: "SCORE: " + score.total,
-            x: 10,
-            y: 30,
+            label: {
+                text: "SCORE:",
+                x: 10,
+                y: 30,
+                font: "10px monospace",
+                color: "#fff",
+                align: "left",
+                baseline: "top",
+            },
+            counter: {
+                text: score.total,
+                x: 50,
+                y: 30,
+                font: "10px monospace",
+                color: "#fff",
+                align: "left",
+                baseline: "top",
+            }
         },
         scoreMultiplier: {
             font: "10px monospace",
@@ -255,8 +266,17 @@ function init() {
 
 function gameLoop() {
     requestAnimationFrame(gameLoop);
-    tick();
-    render();
+    if (!gameStarted) {
+        draw(canvas);
+        ctx.fillStyle = "#fff";
+        ctx.font = "30px monospace"
+        ctx.textAlign = "center";
+        ctx.fillText("Press SPACE to start!", canvas.width / 2, canvas.height / 2);
+        if (keys.space) gameStarted = true;
+    } else {
+        tick();
+        render();
+    }
 }
 
 function tick() {
@@ -268,12 +288,15 @@ function tick() {
 
 function updateVariables() {
     gameTicks++;
-    background1.x--;
-    background1.x %= 1024;
-    background2.x = background1.x + background1.width;
-    if(startMessage.duration) startMessage.duration--;
+    if (!compatMode) {
+        background1.image.x -= 2;
+        background1.image.x %= 1024;
+        background2.image.x = background1.image.x + background1.image.width;
+    }
+
+    if (gui.startMessage.duration) gui.startMessage.duration--;
     gui.healthBar.width = player.hp;
-    gui.scoreCounter.text = "SCORE: " + score.total;
+    gui.scoreCounter.counter.text = score.total;
     gui.scoreMultiplier.text = "x" + score.multiplier;
 }
 
@@ -294,6 +317,10 @@ function updatePlayer() {
         if (player.shotCooldown) player.shotCooldown -= player.firerate;
 
         move(player);
+        if (!compatMode) {
+            player.image.x = player.x - 16;
+            player.image.y = player.y;
+        }
     } else {
         gameOver = true;
     }
@@ -325,7 +352,6 @@ function updateProjectiles() {
                 }
             }
         }
-
     }
 }
 
@@ -334,8 +360,9 @@ function updateEnemies() {
     if (gameTicks > 250 - (score.total / 100)) spawnEnemies();
 
     for (i = 0; i < enemies.length; i++) {
+        var enemy = enemyTypes[enemies[i].type];
         if (enemies[i].hp <= 0) {
-            addPoints(enemies[i].pointsOnKill);
+            addPoints(enemy.pointsOnKill);
             killEnemy(i);
 
         } else if ((enemies[i].x + enemies[i].width) < 0) { //remove enemies upon reaching the left side of the screen.
@@ -347,13 +374,12 @@ function updateEnemies() {
         } else {
             move(enemies[i]);
 
-            if (enemies[i].shotCooldown) enemies[i].shotCooldown -= enemies[i].firerate;
+            if (enemies[i].shotCooldown) enemies[i].shotCooldown -= enemy.firerate;
 
             if (!enemies[i].shotCooldown) {
                 shootProjectile(enemies[i]);
                 enemies[i].shotCooldown = 100;
             }
-
         }
     }
 }
@@ -371,7 +397,6 @@ function shootProjectile(obj) {
         firedBy: obj.role,
     });
     obj.shotCooldown = 100;
-
 }
 
 function spawnEnemies() {
@@ -384,14 +409,14 @@ function spawnEnemies() {
         role: "enemy",
         color: enemyType.color,
         x: canvas.width + Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        y: Math.random() * (canvas.height - 48),
         width: enemyType.width,
         height: enemyType.height,
         xSpeed: enemyType.xSpeed,
         ySpeed: enemyType.ySpeed,
         hp: enemyType.hp,
-        pointsOnKill: enemyType.pointsOnKill,
-        firerate: enemyType.firerate,
+        //pointsOnKill: enemyType.pointsOnKill,
+        //firerate: enemyType.firerate,
         projectile: enemyType.projectile,
         shotCooldown: 0,
     });
@@ -411,9 +436,9 @@ function checkCollision(objA, objB) {
     }
 }
 
-function addPoints(points) {
-    score.total += Math.floor(points * score.multiplier);
-    score.multiplier += (points / 100);
+function addPoints(amt) {
+    score.total += Math.floor(amt * score.multiplier);
+    score.multiplier += (amt / 100);
 }
 
 function killEnemy(i) {
@@ -424,16 +449,21 @@ function render() {
     //clear canvas
     draw(canvas);
     ctx.font = "10px monospace";
-
-    image(background1);
-    image(background2);
+    if (!compatMode) {
+        image(background1);
+        image(background2);
+    }
     //draw projectiles
     for (i = 0; i < projectiles.length; i++) {
         draw(projectiles[i]);
     };
 
     //draw player
-    image(player);
+    if (!compatMode) {
+        image(player);
+    } else {
+        draw(player);
+    }
     player.color = "#0ff";
 
     //draw enemies
@@ -453,25 +483,18 @@ function render() {
         } else {
             ctx.fillStyle = "#f00";
         }
-        ctx.fillRect(40 + (i * 2), 10, 1, 10);
+        ctx.fillRect(45 + (i * 2), 10, 1, 10);
     }
-    //draw(gui.healthBar)
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "hanging"
-    ctx.fillText("LIFE:", 10, 10);
+    text(gui.healthBar.label);
 
     //score
-    text(gui.scoreCounter);
-    /*
-    ctx.fillStyle = "#fff";
-    ctx.fillText("SCORE: " + score.total, 10, 30);
-    */
+    text(gui.scoreCounter.label);
+    text(gui.scoreCounter.counter);
     //multiplier
     ctx.font = 10 * score.multiplier + "px monospace";
     ctx.fillText("x" + score.multiplier, 10, 45);
 
-    if (startMessage.duration % 5) text(startMessage);
+    if (gui.startMessage.duration % 5) text(gui.startMessage);
 
     if (gameOver) {
         draw(canvas);
@@ -479,16 +502,16 @@ function render() {
     }
 }
 
-function draw(shape) {
-    ctx.fillStyle = shape.color;
-    ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+function draw(obj) {
+    ctx.fillStyle = obj.color;
+    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
 }
 
 function image(obj) {
-    if (obj.scale) {
-        ctx.drawImage(obj.image, obj.x, obj.y, obj.width, obj.height);
+    if (obj.image.scale) {
+        ctx.drawImage(obj.image.src, obj.image.x, obj.image.y, obj.image.width, obj.image.height);
     } else {
-        ctx.drawImage(obj.image, obj.x, obj.y);
+        ctx.drawImage(obj.image.src, obj.image.x, obj.image.y);
     }
 }
 
