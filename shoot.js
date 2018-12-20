@@ -1,7 +1,6 @@
 //canvas setup
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-
 ctx.imageSmoothingEnabled = false;
 
 
@@ -40,7 +39,8 @@ var gameTicks = new Number;
 var score = new Object;
 
 //background
-var background = new Object;
+var background1 = new Object;
+var background2 = new Object;
 
 //player
 var player = new Object;
@@ -58,6 +58,9 @@ var projectiles = new Array;
 //ui
 var gui = new Object;
 
+var santa = new Image;
+var background = new Image;
+
 
 init();
 
@@ -66,6 +69,8 @@ function init() {
         imageCollection = document.images;
     }
 
+    santa.src = "img/santa.png";
+background.src = "img/bg.png";
     gameOver = false;
     gameTicks = 100;
     score = {
@@ -78,7 +83,7 @@ function init() {
 
     background1 = {
         image: {
-            src: imageCollection[1],
+            src: background,
             x: 0,
             y: 0,
             width: 1024,
@@ -88,7 +93,7 @@ function init() {
     }
     background2 = {
         image: {
-            src: imageCollection[1],
+            src: background,
             x: 1024,
             y: 0,
             width: 1024,
@@ -102,7 +107,7 @@ function init() {
         role: "player",
         color: "#0ff",
         image: {
-            src: imageCollection[0],
+            src: santa,
             x: 50,
             y: canvas.height / 2,
             scale: false,
