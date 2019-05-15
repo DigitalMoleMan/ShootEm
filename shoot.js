@@ -64,6 +64,7 @@ var background = new Image;
 
 init();
 
+
 function init() {
     if (!compatMode) {
         imageCollection = document.images;
@@ -269,6 +270,9 @@ background.src = "img/bg.png";
     gameLoop();
 }
 
+/**
+ * Main loop
+ */
 function gameLoop() {
     requestAnimationFrame(gameLoop);
     if (!gameStarted) {
@@ -283,6 +287,7 @@ function gameLoop() {
         render();
     }
 }
+
 
 function tick() {
     updateVariables();
